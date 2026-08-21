@@ -7,21 +7,13 @@ class PhotoSwipeSlideshow {
 		this.options = Object.assign({
 			defaultDelayMs: 4000,
 			playPauseButtonOrder: 6,
-			progressBarPosition: 'top',
-			progressBarTransition: 'ease',
-			restartOnSlideChange: true,
-			autoHideProgressBar: true
+			restartOnSlideChange: true
 		},options);
 		
 		// Use the stored slideshow length, if it's been saved to Local Storage.
 		// Otherwise, use the length specified by the caller, or fall back to the default value.
 		this.setSlideshowLength(
 			Number(localStorage.getItem('pswp_delay')) || this.options.defaultDelayMs,
-		);
-
-		document.head.insertAdjacentHTML(
-			'beforeend',
-			`<style>.pswp__progress-bar{position:fixed;${this.options.progressBarPosition}:0;width:0;height:0}.pswp__progress-bar.running{width:100%;height:3px;transition-property:width;background:#c00}</style>`,
 		);
 
 		// Set default parameters.
@@ -51,14 +43,6 @@ class PhotoSwipeSlideshow {
 				onClick: (event, el) => {
 					this.setSlideshowState();
 				},
-			});
-
-			// Add an element for the slideshow progress bar.
-			pswp.ui.registerElement({
-				name: 'playtime',
-				appendTo: 'wrapper', // add to PhotoSwipe's scroll viewport wrapper
-				tagName: 'div',
-				className: 'pswp__progress-bar',
 			});
 
 			// Add custom keyboard bindings, replacing the default bindings.
@@ -111,16 +95,13 @@ class PhotoSwipeSlideshow {
 			// Starting the slideshow: go to next slide after some wait time.
 			this.goToNextSlideAfterTimeout();
 		} else {
-			// Stopping the slideshow: reset the progress bar and timer.
+			// Stopping the slideshow: clear the timer.
 			this.resetSlideshow();
 		}
 
 		// Update button icon to reflect the slideshow state.
 		document.querySelector('#pswp__icn-stop').style.display = this.slideshowIsRunning ? 'inline' : 'none';
 		document.querySelector('#pswp__icn-play').style.display = this.slideshowIsRunning ? 'none' : 'inline';
-
-		// Optionally ensure the progress bar isn't hidden after some time of inactivity.
-		document.querySelector('.pswp__progress-bar').style.opacity = this.options.autoHideProgressBar ? null : 1;
 
 		// Prevent or allow the screen to turn off.
 		this.toggleWakeLock();
@@ -212,7 +193,7 @@ class PhotoSwipeSlideshow {
 	}
 
 	goToNextSlideAfterTimeout() {
-		// Reset the progress bar and timer.
+		// Clear any timer already pending.
 		this.resetSlideshow();
 
 		if (this.slideContentHasLoaded()) {
@@ -228,44 +209,11 @@ class PhotoSwipeSlideshow {
 					this.goToNextSlideAfterTimeout();
 				}
 			}, currentSlideTimeout);
-
-			// Show the progress bar.
-			// This needs a small delay so the browser has time to reset the progress bar.
-			setTimeout(() => {
-				if (this.slideshowIsRunning) {
-					this.toggleProgressBar(currentSlideTimeout);
-				}
-			}, 100);
 		} else {
 			// Wait for the media to load, without blocking the page.
 			this.slideshowTimerID = setTimeout(() => {
 				this.goToNextSlideAfterTimeout();
 			}, 200);
-		}
-	}
-
-	// https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function
-	getSlideTransition() {
-		if (this.isVideoContent(pswp.currSlide.content)) {
-			// Match the transition of a video player's seekbar.
-			return 'linear';
-		} else {
-			// Use the default animation.
-			return this.options.progressBarTransition;
-		}
-	}
-
-	toggleProgressBar(currentSlideTimeout) {
-		const slideshowProgressBarElement = document.querySelector('.pswp__progress-bar');
-
-		if (currentSlideTimeout) {
-			// Start slideshow
-			slideshowProgressBarElement.style.transitionTimingFunction = this.getSlideTransition();
-			slideshowProgressBarElement.style.transitionDuration = `${currentSlideTimeout}ms`;
-			slideshowProgressBarElement.classList.add('running');
-		} else {
-			// Stop slideshow
-			slideshowProgressBarElement.classList.remove('running');
 		}
 	}
 
@@ -309,7 +257,6 @@ class PhotoSwipeSlideshow {
 
 	//Stop the slideshow by resetting the progress bar and timer.
 	resetSlideshow() {
-		this.toggleProgressBar();
 		if (this.slideshowTimerID) {
 			clearTimeout(this.slideshowTimerID);
 			this.slideshowTimerID = null;

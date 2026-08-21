@@ -48,22 +48,6 @@ Where to place the slideshow toggle button, relative to other toolbar items.
 By default, it's placed next to the slide counter.
 See [PhotoSwipe's API](https://photoswipe.com/adding-ui-elements/#uiregisterelement-api) for the order of the default elements.
 
-#### `progressBarPosition: 'top'`
-
-Position for the progress bar.
-
-Must be either `top` or `bottom`.
-
-#### `progressBarTransition: 'ease'`
-
-Progress bar animation.
-
-See https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function for supported values.
-The `ease` animation starts slowly, quickly speeds up until the middle, then slows down.
-
-Slides with image content will use this animation, while
-slides with video content will use a `linear` transition, to match a video player's seekbar.
-
 #### `restartOnSlideChange: true`
 
 Whether slide changes should restart the timer.
@@ -71,18 +55,24 @@ Whether slide changes should restart the timer.
 This is useful if manual slide changes are expected during a slideshow,
 especially if mixing image and video content.
 
-#### `autoHideProgressBar: true`
+## Differences from upstream
 
-Whether the progress bar can be hidden by the [Auto Hide UI plugin](https://github.com/arnowelzel/photoswipe-auto-hide-ui).
+This fork has no progress bar. Upstream registers a `.pswp__progress-bar` element
+and injects a `<style>` block for it from the plugin constructor; both are removed
+here, along with the `progressBarPosition`, `progressBarTransition` and
+`autoHideProgressBar` options that only configured them.
+
+Two reasons beyond taste: a countdown drawn over the image competes with the image
+for attention, and because the injection was unguarded, an application that
+constructs the plugin more than once per document — anything rebuilding its
+lightbox after client-side navigation — accumulated one `<style>` element per
+construction.
 
 ## Added HTML elements
 
 The plugin adds elements with the following CSS attributes:
 
 * `.pswp__button--playpause-button`: A button for starting or stopping the slideshow
-
-* `.pswp__progress-bar`: The slideshow progress bar
-  * `.pswp__progress-bar.running`: The progress bar while the slideshow is running
 
 ## Keyboard bindings
 
